@@ -1,0 +1,106 @@
+Use SSH for pushing to GitHub (recommended)
+Since you already have your SSH key pair in ~/.ssh, you just need to:
+
+1. Make sure your public key is added to GitHub:
+Go to: https://github.com/settings/keys
+
+Click "New SSH key"
+
+Paste the contents of ~/.ssh/id_rsa.pub or ~/.ssh/id_ed25519.pub
+
+2. Set the remote to use SSH instead of HTTPS:
+If your current Git remote is HTTPS (e.g., https://github.com/username/repo.git), change it:
+
+
+git remote set-url origin git@github.com:username/repo.git
+(Replace username/repo.git with your actual repo path.)
+
+3. Test your SSH connection:
+
+ssh -T git@github.com
+You should see something like:
+
+Hi username! You've successfully authenticated, but GitHub does not provide shell access.
+
+
+PS C:\data\EclipseAWSLambda\reports-demo> git init
+Initialized empty Git repository in C:/data/EclipseAWSLambda/reports-demo/.git/
+
+PS C:\data\EclipseAWSLambda\reports-demo> git add .
+
+PS C:\data\EclipseAWSLambda\reports-demo> git commit -m "Initial commit"
+[master (root-commit) 61587a7] Initial commit
+
+PS C:\data\EclipseAWSLambda\reports-demo> git remote add origin git@github.com:monicamarshall/spark-reports.git
+
+PS C:\data\EclipseAWSLambda\reports-demo> git push -u origin main
+error: src refspec main does not match any.
+error: failed to push some refs to 'git@github.com:monicamarshall/spark-reports.git'
+
+PS C:\data\EclipseAWSLambda\reports-demo> git branch
+* master
+
+PS C:\data\EclipseAWSLambda\reports-demo> git branch -M main
+
+PS C:\data\EclipseAWSLambda\reports-demo> git branch
+* main
+PS C:\data\EclipseAWSLambda\reports-demo> git push -u origin main
+Counting objects: 37, done.
+Delta compression using up to 8 threads.
+Compressing objects: 100% (23/23), done.
+Writing objects: 100% (37/37), 14.02 KiB | 0 bytes/s, done.
+Total 37 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), done.
+To git@github.com:monicamarshall/spark-reports.git
+ * [new branch]      main -> main
+Branch main set up to track remote branch main from origin.
+
+
+
+
+
+PS C:\data\EclipseAWSLambda\reports-demo> mvn clean package -DskipTests 
+PS C:\data\EclipseAWSLambda\reports-demo> docker build -t spark-spring-boot:1.0.0 . 
+PS C:\data\EclipseAWSLambda\reports-demo> docker run -it --rm -p 8080:8080 
+-e AWS_ACCESS_KEY_ID=******************* 
+-e AWS_SECRET_ACCESS_KEY=***************  spark-spring-boot:1.0.0
+
+pr.data.0.Current and population.json file are loaded as dataframes with Spark
+
+Using the population dataframe the mean and the standard deviation 
+of the annual US population across the years [2013, 2018] inclusive are created.
+
+Using the dataframe from pr.data.0.Current, for every series_id, 
+find the best year: the year with the max/largest sum of "value" 
+for all quarters in that year. 
+
+A report is generated with each series id, 
+the best year for that series, 
+and the summed value for that year. 
+
+For example, the values look like this:
+
+series_id	year	period	value
+PRS30006011	1995	Q01	1
+PRS30006011	1995	Q02	2
+PRS30006011	1996	Q01	3
+PRS30006011	1996	Q02	4
+PRS30006012	2000	Q01	0
+PRS30006012	2000	Q02	8
+PRS30006012	2001	Q01	2
+PRS30006012	2001	Q02	3
+the report would generate the following table:
+
+series_id	year	value
+PRS30006011	1996	7
+PRS30006012	2000	8
+
+Using both dataframes 
+a report is generated that provides the value 
+for series_id = PRS30006032 and period = Q01 
+and the population for that given year 
+(if available in the population dataset). 
+The below table shows an example of one row that might appear in the resulting table:
+
+series_id	year	period	value	Population
+PRS30006032	2018	Q01	1.9	327167439
