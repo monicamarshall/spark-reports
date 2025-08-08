@@ -1,0 +1,65 @@
+PS C:\data\EclipseAWSLambda\reports-demo> aws eks describe-cluster --name spark-cluster
+{
+    "cluster": {
+        "name": "spark-cluster",
+        "arn": "arn:aws:eks:us-east-2:828909213317:cluster/spark-cluster",
+        "createdAt": "2025-08-07T15:32:12.587000-06:00",
+        "version": "1.33",
+        "endpoint": "https://59B033A89C09FC3AA6AAED928D2FC7AA.gr7.us-east-2.eks.amazonaws.com",
+        "roleArn": "arn:aws:iam::828909213317:role/EKSClusterRole",
+        "resourcesVpcConfig": {
+            "subnetIds": [
+                "subnet-084772b6ba773dc79",
+                "subnet-0701d8c5265bf5079"
+            ],
+            "securityGroupIds": [],
+            "clusterSecurityGroupId": "sg-033372fe0bce36001",
+            "vpcId": "vpc-013d6489db3472edf",
+            "endpointPublicAccess": true,
+            "endpointPrivateAccess": false,
+            "publicAccessCidrs": [
+                "0.0.0.0/0"
+            ]
+        },
+        "kubernetesNetworkConfig": {
+            "serviceIpv4Cidr": "172.20.0.0/16",
+            "ipFamily": "ipv4",
+            "elasticLoadBalancing": {
+                "enabled": false
+            }
+        },
+        "logging": {
+            "clusterLogging": [
+                {
+                    "types": [
+                        "api",
+                        "audit",
+                        "authenticator",
+                        "controllerManager",
+                        "scheduler"
+                    ],
+                    "enabled": false
+                }
+            ]
+        },
+        "identity": {
+            "oidc": {
+                "issuer": "https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA"
+            }
+        },
+        "status": "ACTIVE",
+        "certificateAuthority": {
+            "data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJTGJFb1JnNHR3QTB3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBNE1EY3lNVE14TkRGYUZ3MHpOVEE0TURVeU1UTTJOREZhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURnRmdDeUtEalhBTDhXU3BHL1lGVCt1a3ZSaWxQQ0dYTGVyYnVINmNFVFFUMUtISDhGTHNyRU5iL2cKNmsrUktkZ3JyY1kzLytQNTZkdHpkbTdHWUcvdTJVMW1pSFdOU0V0ZHJ1WVNKWnN5WVhYTy9qNlA3VFk4cDhLSApSUlhPdUg2eUxDbDZnWmJBaXBiUy92YXNYNlp5MGQ2Q2F4R1BUb1o2bXVmbHlSUFFaK2dWTVZ5cXpsNFpFM0NzCmxkTW9aTVIxY3BQM1gyZERtM0hmWE93bHd4djM3b0FxQi8vQ2VIZzBVSndkZTJaQWJVamRaSVlLTHJjdkRSRXEKMk8xNCtZd2daUy82TWtsb21URmpkNU5aUzliZ0FHQ2NjYVk0RzNBN2phcXUvRVFUaElJYmpBd2dhczRLOXJpaQpnWG9XKzBVWFNUbVloOGk0ckhvMlRlYWVxWUJYQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJSdE9tK3BkdndrN1pxZFRYVWczTmhFU2UwMVREQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQUUyeCtpOHo4NwpvYkFCK0pEV0F4TG02M01MRi9uclVlTHN6dzRPUFMwWUNmYjNBQ3NCeENCTUdBU1ozaHpFZHhwaGVteDN1V2dFClRNU01pWThOemdWRStIcHB6QWJGSTdjcGo5cmdkak5BYkFiVUI5ZXYydGdtQ1hrTnhJbFNoMVlERjRzbCtJNVkKWFkzbFZnRWhpUTNwWXMvUWNZUVo1UWx5LzE3OWdiOUpRLzVPaDZIWDE3MUc4U3hGM1lzc1FLMGFHNlNRdWhCWgorVXBVZ2lMNmppYnRSUCtpQkQxNHJCM1p4VTIwNlBkOUZUT3VodTIzbGw4ZGlIL3pJczhlQkxOOXRMMDBaVm1XCkt6aTQ0Ny85TDYyUlVtZXlldjRocVhPNDhwRmtaY2U2dmdRY2M3OFA3cGREV3J5N1NUR0Y4eHNCTEphd1grNEkKemNXaElqOE11eFdYCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+        },
+        "platformVersion": "eks.9",
+        "tags": {
+            "Name": "spark-cluster"
+        },
+        "accessConfig": {
+            "authenticationMode": "CONFIG_MAP"
+        },
+        "upgradePolicy": {
+            "supportType": "EXTENDED"
+        }
+    }
+}

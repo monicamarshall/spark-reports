@@ -1,0 +1,259 @@
+PS C:\data\EclipseAWSLambda\reports-demo\eks-service-account> terraform plan
+var.aws_account_id
+  Enter a value: 828909213317
+
+var.namespace
+  Enter a value: spark-reports
+
+var.oidc_provider_url
+  Enter a value: https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA
+
+var.region
+  Enter a value: us-east-2
+
+var.service_account_name
+  Enter a value: spark-reports-sa
+
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_iam_role.spark_reports_irsa_role will be created
+  + resource "aws_iam_role" "spark_reports_irsa_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRoleWithWebIdentity"
+                      + Condition = {
+                          + StringEquals = {
+                              + "https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA:sub" = "system:serviceaccount:spark-reports:spark-reports-sa"
+                            }
+                        }
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Federated = "arn:aws:iam::828909213317:oidc-provider/https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "spark-reports-irsa-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # aws_iam_role_policy_attachment.s3_access will be created
+  + resource "aws_iam_role_policy_attachment" "s3_access" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+      + role       = "spark-reports-irsa-role"
+    }
+
+  # kubernetes_service_account.spark_reports_sa will be created
+  + resource "kubernetes_service_account" "spark-reports-sa" {
+      + automount_service_account_token = true
+      + default_secret_name             = (known after apply)
+      + id                              = (known after apply)
+
+      + metadata {
+          + annotations      = (known after apply)
+          + generation       = (known after apply)
+          + name             = "spark-reports-sa"
+          + namespace        = "spark-reports"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + iam_role_arn         = (known after apply)
+  + service_account_name = "spark-reports-sa"
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't guarantee to take exactly these actions if you run "terraform apply" now.
+PS C:\data\EclipseAWSLambda\reports-demo\eks-service-account>
+
+
+
+
+
+
+
+
+
+PS C:\data\EclipseAWSLambda\reports-demo\eks-service-account> terraform import kubernetes_namespace.spark_reports spark-reports
+var.cluster_name
+  EKS cluster name
+
+  Enter a value: spark-cluster
+
+var.region
+  AWS region
+
+  Enter a value: us-east-2
+
+data.aws_eks_cluster.spark_cluster: Reading...
+data.aws_eks_cluster_auth.spark_cluster: Reading...
+data.aws_caller_identity.current: Reading...
+data.aws_eks_cluster_auth.spark_cluster: Read complete after 0s [id=spark-cluster]
+data.aws_caller_identity.current: Read complete after 0s [id=828909213317]
+data.aws_eks_cluster.spark_cluster: Read complete after 1s [id=spark-cluster]
+kubernetes_namespace.spark_reports: Importing from ID "spark-reports"...
+kubernetes_namespace.spark_reports: Import prepared!
+  Prepared kubernetes_namespace for import
+kubernetes_namespace.spark_reports: Refreshing state... [id=spark-reports]
+
+Import successful!
+
+The resources that were imported are shown above. These resources are now in
+your Terraform state and will henceforth be managed by Terraform.
+
+PS C:\data\EclipseAWSLambda\reports-demo\eks-service-account> terraform apply
+var.cluster_name
+  EKS cluster name
+
+  Enter a value: spark-cluster
+
+var.region
+  AWS region
+
+  Enter a value: us-east-2
+
+data.aws_eks_cluster_auth.spark_cluster: Reading...
+data.aws_eks_cluster.spark_cluster: Reading...
+data.aws_caller_identity.current: Reading...
+data.aws_eks_cluster_auth.spark_cluster: Read complete after 0s [id=spark-cluster]
+data.aws_caller_identity.current: Read complete after 0s [id=828909213317]
+data.aws_eks_cluster.spark_cluster: Read complete after 0s [id=spark-cluster]
+aws_iam_role.spark_reports_irsa_role: Refreshing state... [id=spark-reports-irsa-role]
+kubernetes_namespace.spark_reports: Refreshing state... [id=spark-reports]
+aws_iam_role_policy_attachment.s3_access: Refreshing state... [id=spark-reports-irsa-role/arn:aws:iam::aws:policy/AmazonS3FullAccess]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # kubernetes_service_account.spark_reports_sa will be created
+  + resource "kubernetes_service_account" "spark_reports_sa" {
+      + automount_service_account_token = true
+      + default_secret_name             = (known after apply)
+      + id                              = (known after apply)
+
+      + metadata {
+          + annotations      = {
+              + "eks.amazonaws.com/role-arn" = "arn:aws:iam::828909213317:role/spark-reports-irsa-role"
+            }
+          + generation       = (known after apply)
+          + name             = "spark-reports-sa"
+          + namespace        = "spark-reports"
+          + resource_version = (known after apply)
+          + uid              = (known after apply)
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + service_account_name = "spark-reports-sa"
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+kubernetes_service_account.spark_reports_sa: Creating...
+kubernetes_service_account.spark_reports_sa: Creation complete after 1s [id=spark-reports/spark-reports-sa]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+service_account_name = "spark-reports-sa"
+
+
+CLUSTER DESCRIBE OUTPUT:
+
+PS C:\data\EclipseAWSLambda\reports-demo\eks-service-account> aws eks describe-cluster --name spark-cluster --region us-east-2
+{
+    "cluster": {
+        "name": "spark-cluster",
+        "arn": "arn:aws:eks:us-east-2:828909213317:cluster/spark-cluster",
+        "createdAt": "2025-08-07T15:32:12.587000-06:00",
+        "version": "1.33",
+        "endpoint": "https://59B033A89C09FC3AA6AAED928D2FC7AA.gr7.us-east-2.eks.amazonaws.com",
+        "roleArn": "arn:aws:iam::828909213317:role/EKSClusterRole",
+        "resourcesVpcConfig": {
+            "subnetIds": [
+                "subnet-084772b6ba773dc79",
+                "subnet-0701d8c5265bf5079"
+            ],
+            "securityGroupIds": [],
+            "clusterSecurityGroupId": "sg-033372fe0bce36001",
+            "vpcId": "vpc-013d6489db3472edf",
+            "endpointPublicAccess": true,
+            "endpointPrivateAccess": false,
+            "publicAccessCidrs": [
+                "0.0.0.0/0"
+            ]
+        },
+        "kubernetesNetworkConfig": {
+            "serviceIpv4Cidr": "172.20.0.0/16",
+            "ipFamily": "ipv4",
+            "elasticLoadBalancing": {
+                "enabled": false
+            }
+        },
+        "logging": {
+            "clusterLogging": [
+                {
+                    "types": [
+                        "api",
+                        "audit",
+                        "authenticator",
+                        "controllerManager",
+                        "scheduler"
+                    ],
+                    "enabled": false
+                }
+            ]
+        },
+        "identity": {
+            "oidc": {
+                "issuer": "https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA"
+            }
+        },
+        "status": "ACTIVE",
+        "certificateAuthority": {
+            "data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJTGJFb1JnNHR3QTB3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRBNE1EY3lNVE14TkRGYUZ3MHpOVEE0TURVeU1UTTJOREZhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUURnRmdDeUtEalhBTDhXU3BHL1lGVCt1a3ZSaWxQQ0dYTGVyYnVINmNFVFFUMUtISDhGTHNyRU5iL2cKNmsrUktkZ3JyY1kzLytQNTZkdHpkbTdHWUcvdTJVMW1pSFdOU0V0ZHJ1WVNKWnN5WVhYTy9qNlA3VFk4cDhLSApSUlhPdUg2eUxDbDZnWmJBaXBiUy92YXNYNlp5MGQ2Q2F4R1BUb1o2bXVmbHlSUFFaK2dWTVZ5cXpsNFpFM0NzCmxkTW9aTVIxY3BQM1gyZERtM0hmWE93bHd4djM3b0FxQi8vQ2VIZzBVSndkZTJaQWJVamRaSVlLTHJjdkRSRXEKMk8xNCtZd2daUy82TWtsb21URmpkNU5aUzliZ0FHQ2NjYVk0RzNBN2phcXUvRVFUaElJYmpBd2dhczRLOXJpaQpnWG9XKzBVWFNUbVloOGk0ckhvMlRlYWVxWUJYQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJSdE9tK3BkdndrN1pxZFRYVWczTmhFU2UwMVREQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQUUyeCtpOHo4NwpvYkFCK0pEV0F4TG02M01MRi9uclVlTHN6dzRPUFMwWUNmYjNBQ3NCeENCTUdBU1ozaHpFZHhwaGVteDN1V2dFClRNU01pWThOemdWRStIcHB6QWJGSTdjcGo5cmdkak5BYkFiVUI5ZXYydGdtQ1hrTnhJbFNoMVlERjRzbCtJNVkKWFkzbFZnRWhpUTNwWXMvUWNZUVo1UWx5LzE3OWdiOUpRLzVPaDZIWDE3MUc4U3hGM1lzc1FLMGFHNlNRdWhCWgorVXBVZ2lMNmppYnRSUCtpQkQxNHJCM1p4VTIwNlBkOUZUT3VodTIzbGw4ZGlIL3pJczhlQkxOOXRMMDBaVm1XCkt6aTQ0Ny85TDYyUlVtZXlldjRocVhPNDhwRmtaY2U2dmdRY2M3OFA3cGREV3J5N1NUR0Y4eHNCTEphd1grNEkKemNXaElqOE11eFdYCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+        },
+        "platformVersion": "eks.9",
+        "tags": {
+            "Name": "spark-cluster"
+        },
+        "accessConfig": {
+            "authenticationMode": "CONFIG_MAP"
+        },
+        "upgradePolicy": {
+            "supportType": "EXTENDED"
+        }
+    }
+}
