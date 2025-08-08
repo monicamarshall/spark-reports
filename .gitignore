@@ -3,6 +3,16 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+.gitattributes
+
+### AWS ###
+.aws
+.aws-sam
+
+### Terraform ###
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
 
 ### STS ###
 .apt_generated

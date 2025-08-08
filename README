@@ -1,3 +1,61 @@
+Before running the Terraform commands ( init, plan, etc... ), make sure you are logged into AWS on your terminal window.  Make sure your terminal session has access to your AWS credentials. You can do this by:
+
+Option 1: Using environment variables
+
+export AWS_ACCESS_KEY_ID=your-access-key-id
+export AWS_SECRET_ACCESS_KEY=your-secret-access-key
+export AWS_DEFAULT_REGION=us-east-2  # or your preferred region
+Option 2: Using the AWS CLI (recommended)
+
+aws configure
+
+PS C:\data\EclipseAWSLambda\reports-demo> aws sts get-caller-identity
+{
+    "UserId": "AIDA4B7WW22C6EIPQDXZO",
+    "Account": "828909213317",
+    "Arn": "arn:aws:iam::828909213317:user/monica"
+}
+
+
+Helpful Terraform Links:
+- [Terraform Language Documentation](https://www.terraform.io/docs/language/index.html)
+- [Resource: azure_registry](https://registry.terraform.io/namespaces/Azure)
+
+## Step 0: Initialize Terraform
+```
+terraform init
+```
+
+## Step 1: Plan Resources
+```
+terraform plan -var-file="vars/us-east-2.tfvars"
+```
+To save the output of terraform plan enter:
+
+terraform plan -var-file="vars/us-east-2.tfvars" > plan-output.txt
+
+
+## Step 2: Apply Resources
+```
+terraform apply -var-file="vars/us-east-2.tfvars"
+```
+To save the output of terraform apply enter:
+
+terraform apply -var-file="vars/us-east-2.tfvars" -auto-approve > apply-output.txt
+
+
+## Step 3: Cleanup Terraform Resources
+```
+terraform destroy -var-file="vars/east-us-2.tfvars"
+
+PS C:\data\EclipseAWSLambda\reports-demo> terraform import -var-file="vars/us-east-2.tfvars" aws_s3_bucket.project_bucket s3upload-lambda-bucket
+aws_s3_bucket.project_bucket: Importing from ID "s3upload-lambda-bucket"...
+aws_s3_bucket.project_bucket: Import prepared!
+  Prepared aws_s3_bucket for import
+aws_s3_bucket.project_bucket: Refreshing state... [id=s3upload-lambda-bucket]
+
+Import successful!
+
 Use SSH for pushing to GitHub (recommended)
 Since you already have your SSH key pair in ~/.ssh, you just need to:
 
