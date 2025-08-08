@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       serviceAccountName: spark-reports-sa
-      - image: monicamarshall/sparkreports:2
+      - image: monicamarshall/sparkreports:1
         name: sparkreports-container
         ports:
         - containerPort: 8080
