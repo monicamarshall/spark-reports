@@ -30,7 +30,7 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           docker build -t docker.io/monicamarshall/sparkreports:${{ env.VERSION }} .
-          docker push docker.io/monicamarshall/sparkreports:${{ env.VERSION }} .
+          docker push docker.io/monicamarshall/sparkreports:${{ env.VERSION }}
   
   update_k8s_yaml_version_file_with_latest_image_tag:
     runs-on: ubuntu-latest
