@@ -515,3 +515,5 @@ var.service_account_name
 
 
 $env:KUBECONFIG = "C:\Users\monica\.kube\config"
+
+kubectl get deployment spark-reports-deployment -n spark-reports -o jsonpath='{.spec.template.spec.containers[0].image}'
