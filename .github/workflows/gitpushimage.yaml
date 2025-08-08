@@ -96,6 +96,31 @@ jobs:
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
+      - name: Update deployment.yaml image tag (safe) and validate
+        env:
+          VERSION: ${{ needs.build_push_docker_image.outputs.version }}
+        run: |
+          set -euo pipefail
+          yq --version
+
+          # Update ONLY the Deployment doc named spark-reports-deployment,
+          # and ONLY the container named sparkreports-container
+          yq -i '
+            select(.kind == "Deployment" and .metadata.name == "spark-reports-deployment")
+            | (.spec.template.spec.containers[]
+              | select(.name == "sparkreports-container")
+              | .image) = "monicamarshall/sparkreports:" + env(VERSION)
+          ' deployment.yaml
+
+    # Validate before committing so ArgoCD never sees broken YAML
+    kubectl apply --dry-run=client -f deployment.yaml
+
+    git add deployment.yaml
+    git commit -m "chore: deploy image tag ${VERSION}" || echo "No changes to commit"
+    git fetch origin
+    git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+    git push origin "${GITHUB_REF_NAME}"
+
 
       - name: Update deployment.yaml image tag (safe) and validate
         env:
