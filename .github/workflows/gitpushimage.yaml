@@ -1,82 +1,3 @@
-name: Build, push, and bump sparkreports image
-
-on:
-  push:
-    branches: [ main ]
-
-permissions:
-  contents: write
-
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-
-jobs:
-  build_push_docker_image:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.bump.outputs.version }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0   # needed for rebase & pushing
-
-      - name: Bump version from version.txt
-        id: bump
-        run: |
-          if [ ! -f version.txt ]; then echo 0 > version.txt; fi
-          CUR=$(tr -d '\r' < version.txt)
-          NEW=$((CUR + 1))
-          echo "$NEW" > version.txt
-          echo "version=$NEW" >> "$GITHUB_OUTPUT"
-          echo "VERSION=$NEW" >> "$GITHUB_ENV"
-          echo "Bumped version: $CUR -> $NEW"
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Build JAR with Maven
-        run: mvn -q -B clean package --file pom.xml
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build & Push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            monicamarshall/sparkreports:${{ env.VERSION }}
-            monicamarshall/sparkreports:latest
-
-      - name: Commit & push version bump safely
-        run: |
-          git config user.email "${{ secrets.GIT_EMAIL }}"
-          git config user.name  "${{ secrets.GIT_USERNAME }}"
-
-          # Make sure we’re on the workflow branch
-          git checkout "${GITHUB_REF_NAME}"
-
-          # Stage & commit local edits FIRST
-          git add version.txt
-          git commit -m "chore: bump version to $VERSION" || echo "No changes to commit"
-
-          # Rebase on remote to avoid non-fast-forward rejects
-          git fetch origin
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-
-          # Push the rebased commit
-          git push origin "${GITHUB_REF_NAME}"
-
   update_k8s_yaml:
     runs-on: ubuntu-latest
     needs: build_push_docker_image
@@ -96,6 +17,7 @@ jobs:
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
+
       - name: Update deployment.yaml image tag (safe) and validate
         env:
           VERSION: ${{ needs.build_push_docker_image.outputs.version }}
@@ -112,33 +34,7 @@ jobs:
               | .image) = "monicamarshall/sparkreports:" + env(VERSION)
           ' deployment.yaml
 
-    # Validate before committing so ArgoCD never sees broken YAML
-    kubectl apply --dry-run=client -f deployment.yaml
-
-    git add deployment.yaml
-    git commit -m "chore: deploy image tag ${VERSION}" || echo "No changes to commit"
-    git fetch origin
-    git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-    git push origin "${GITHUB_REF_NAME}"
-
-
-      - name: Update deployment.yaml image tag (safe) and validate
-        env:
-          VERSION: ${{ needs.build_push_docker_image.outputs.version }}
-        run: |
-          # Update ONLY the Deployment doc + container image
-          yq -i '
-            select(.kind == "Deployment" and .metadata.name == "spark-reports-deployment")
-            | .spec.template.spec.containers
-            |= (map(
-                 if .name == "sparkreports-container"
-                 then .image = "monicamarshall/sparkreports:" + str(env(VERSION))
-                 else .
-                 end
-               ))
-          ' deployment.yaml
-
-          # Validate YAML before commit so we never push broken manifests
+          # Validate before committing so ArgoCD never sees broken YAML
           kubectl apply --dry-run=client -f deployment.yaml
 
           # Stage & commit local edits FIRST
@@ -151,38 +47,3 @@ jobs:
 
           # Push the rebased commit
           git push origin "${GITHUB_REF_NAME}"
-
-  verify_deploy:
-    runs-on: ubuntu-latest
-    needs: update_k8s_yaml
-    env:
-      AWS_REGION: us-east-2
-      EKS_CLUSTER: spark-cluster
-      NAMESPACE: spark-reports
-      DEPLOYMENT: spark-reports-deployment
-      CONTAINER_NAME: sparkreports-container
-      EXPECTED_TAG: ${{ needs.build_push_docker_image.outputs.version }}
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          # role-to-assume: arn:aws:iam::828909213317:role/<your-ci-role>  # if using OIDC
-
-      - name: Update kubeconfig for EKS
-        run: aws eks update-kubeconfig --name "${EKS_CLUSTER}" --region "${AWS_REGION}"
-
-      - name: Wait for rollout to complete
-        run: kubectl rollout status "deployment/${DEPLOYMENT}" -n "${NAMESPACE}" --timeout=5m
-
-      - name: Verify image tag matches expected
-        run: |
-          ACTUAL_IMAGE=$(kubectl get deployment "${DEPLOYMENT}" -n "${NAMESPACE}" \
-            -o jsonpath='{.spec.template.spec.containers[0].image}')
-          echo "Cluster is running image: ${ACTUAL_IMAGE}"
-          if ! echo "${ACTUAL_IMAGE}" | grep -q "monicamarshall/sparkreports:${EXPECTED_TAG}$"; then
-            echo "ERROR: Expected tag :${EXPECTED_TAG} but found ${ACTUAL_IMAGE}"
-            exit 1
-          fi
-          echo "OK: Image tag matches :${EXPECTED_TAG}"
