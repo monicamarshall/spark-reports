@@ -1,4 +1,4 @@
-name: "Build and push sparkreports Docker image with static tag to Docker Hub"
+name: "Build and push sparkreports Docker image with dynamic version tag to Docker Hub"
 
 on:
   push:
