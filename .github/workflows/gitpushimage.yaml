@@ -52,13 +52,22 @@ jobs:
             monicamarshall/sparkreports:${{ env.VERSION }}
             monicamarshall/sparkreports:latest
 
-      - name: Commit updated version.txt
+      - name: Commit & push version bump safely
         run: |
           git config user.email "${{ secrets.GIT_EMAIL }}"
           git config user.name  "${{ secrets.GIT_USERNAME }}"
+
+          # make sure we’re on the same branch the workflow is running on
+          git checkout "${GITHUB_REF_NAME}"
+
+          # fetch remote and rebase to avoid non-fast-forward rejects
+          git fetch origin
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+
           git add version.txt
           git commit -m "chore: bump version to $VERSION" || echo "No changes to commit"
-          git push || true
+          git push origin "${GITHUB_REF_NAME}"
+
 
   update_k8s_yaml:
     runs-on: ubuntu-latest
