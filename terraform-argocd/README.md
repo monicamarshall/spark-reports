@@ -62,7 +62,9 @@ argocd-server-metrics                     ClusterIP      172.20.216.93    <none>
 In Powershell
 
 PS C:\data\EclipseAWSLambda\reports-demo\terraform-argocd> $encoded = kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}"
+
 PS C:\data\EclipseAWSLambda\reports-demo\terraform-argocd> [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded))
+
 LOVNmC-buV9AtjbW
 
 In bash

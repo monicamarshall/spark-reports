@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-reports-deployment
+  namespace: spark-reports
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sparkreports
+  template:
+    metadata:
+      labels:
+        app: sparkreports
+    spec:
+      containers:
+      - image: monicamarshall/sparkreports:2
+        name: sparkreports-container
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sparkreports-service
+  namespace: spark-reports
+spec:
+  selector:
+    app: sparkreports
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8600
+    targetPort: 8080
+  type: LoadBalancer
