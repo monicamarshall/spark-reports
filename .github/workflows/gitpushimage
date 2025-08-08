@@ -6,8 +6,7 @@ on:
       - main
 
 jobs:
-
-  build_push_supermario_docker_image:
+  build_push_sparkreports_docker_image:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,4 +19,4 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           docker build -t docker.io/monicamarshal/sparkreports:1 .
-          docker push docker.io/monicamarshal/sparkreports:1:1
+          docker push docker.io/monicamarshal/sparkreports:1
