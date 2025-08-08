@@ -1,57 +1,84 @@
-name: "Build and push sparkreports Docker image with dynamic version tag to Docker Hub"
+name: Build, push, and bump sparkreports image
 
 on:
   push:
-    branches:
-      - main
-env:
-  VERSION: $(( $(cat version.txt) + 1 ))
+    branches: [ main ]
+
+permissions:
+  contents: write
 
 jobs:
   build_push_docker_image:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bump version from version.txt
+        id: bump
+        run: |
+          if [ ! -f version.txt ]; then echo 0 > version.txt; fi
+          CUR=$(cat version.txt | tr -d '\r')
+          NEW=$((CUR + 1))
+          echo "$NEW" > version.txt
+          echo "version=$NEW" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$NEW" >> "$GITHUB_ENV"
+          echo "Bumped version: $CUR -> $NEW"
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Build JAR with Maven
-        run: mvn clean package --file pom.xml
+        run: mvn -q -B clean package --file pom.xml
 
       - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build & Push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            monicamarshall/sparkreports:${{ env.VERSION }}
+            monicamarshall/sparkreports:latest
+
+      - name: Commit updated version.txt
         run: |
-          docker build -t docker.io/monicamarshall/sparkreports:${{ env.VERSION }} .
-          docker push docker.io/monicamarshall/sparkreports:${{ env.VERSION }}
-  
-  update_k8s_yaml_version_file_with_latest_image_tag:
+          git config user.email "${{ secrets.GIT_EMAIL }}"
+          git config user.name  "${{ secrets.GIT_USERNAME }}"
+          git add version.txt
+          git commit -m "chore: bump version to $VERSION" || echo "No changes to commit"
+          git push || true
+
+  update_k8s_yaml:
     runs-on: ubuntu-latest
     needs: build_push_docker_image
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
- 
-      - name: Set Git Config
-        run: |
-           git config --global user.email "${{ secrets.GIT_EMAIL}}"
-           git config --global user.name "${{ secrets.GIT_USERNAME}}"
- 
-      - name: Update Deployment YAML
-        run: |
-          git pull
-          sed -i "s|image: monicamarshall/sparkreports:.*$|image: monicamarshall/sparkreports:${{ env.VERSION }}|" deployment.yaml
-          echo ${{ env.VERSION }} > version.txt
-          CURRENT_VERSION=$(cat version.txt)
-          git add deployment.yaml version.txt
-          git commit -m "Updated deployment yaml and version txt file with sparkreports image tag to ${CURRENT_VERSION}"
-          git push
 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure git
+        run: |
+          git config user.email "${{ secrets.GIT_EMAIL }}"
+          git config user.name  "${{ secrets.GIT_USERNAME }}"
+
+      - name: Update deployment.yaml image tag
+        env:
+          VERSION: ${{ needs.build_push_docker_image.outputs.version }}
+        run: |
+          # Update only the image line for sparkreports
+          sed -i 's|image: *monicamarshall/sparkreports:.*|image: monicamarshall/sparkreports:'"$VERSION"'|' deployment.yaml
+          git add deployment.yaml
+          git commit -m "chore: deploy image tag ${VERSION}" || echo "No changes to commit"
+          git push || true
