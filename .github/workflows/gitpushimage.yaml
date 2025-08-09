@@ -139,7 +139,7 @@ jobs:
 
   verify_deploy:
     runs-on: ubuntu-latest
-    needs: update_k8s_yaml
+    needs: [update_k8s_yaml, build_push_docker_image]
     env:
       AWS_REGION: us-east-2
       EKS_CLUSTER: spark-cluster
@@ -156,15 +156,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Who am I?  # optional debug
-        run: aws sts get-caller-identity
-
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --name "${EKS_CLUSTER}" --region "${AWS_REGION}"
 
+      - name: Checkout (for fallback)
+        uses: actions/checkout@v4
+
+      - name: Fallback: set EXPECTED_TAG from version.txt if empty
+        run: |
+          if [ -z "${EXPECTED_TAG}" ]; then
+            V=$(tr -d '\r' < version.txt)
+            echo "EXPECTED_TAG=$V" >> "$GITHUB_ENV"
+            echo "Filled EXPECTED_TAG from version.txt: $V"
+          fi
+
       - name: Wait for rollout to complete
         run: kubectl rollout status "deployment/${DEPLOYMENT}" -n "${NAMESPACE}" --timeout=5m
-      - name: Ensure EXPECTED_TAG is set    # <-- new block goes here
+
+      - name: Ensure EXPECTED_TAG is set
         run: |
           echo "EXPECTED_TAG='${EXPECTED_TAG}'"
           if [ -z "${EXPECTED_TAG}" ]; then
@@ -182,4 +191,5 @@ jobs:
             exit 1
           fi
           echo "OK: Image tag matches :${EXPECTED_TAG}"
+
 
