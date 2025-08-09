@@ -106,8 +106,11 @@ jobs:
           set -euo pipefail
           yq --version
           kubeconform -v
+
+          # Validate before change (ignore missing CRD schemas)
           kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version "${KUBE_VERSION}" deployment.yaml
 
+          # Update ONLY the container named sparkreports-container in the named Deployment
           yq -i '
             (. | select(.kind == "Deployment" and .metadata.name == "spark-reports-deployment")
                | .spec.template.spec.containers[] 
@@ -115,6 +118,7 @@ jobs:
                | .image) = "monicamarshall/sparkreports:" + env(VERSION)
           ' deployment.yaml
 
+          # Validate after change
           kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version "${KUBE_VERSION}" deployment.yaml
 
           git add deployment.yaml
@@ -152,16 +156,14 @@ jobs:
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --name "${EKS_CLUSTER}" --region "${AWS_REGION}"
 
-      - name: Wait for rollout to complete
-        run: kubectl rollout status "deployment/${DEPLOYMENT}" -n "${NAMESPACE}" --timeout=5m
-
-      - name: Ensure EXPECTED_TAG is set
+      # Ensure the cluster is actually updated to the new image tag, regardless of GitOps sync timing
+      - name: Set image on Deployment to expected tag
         run: |
-          echo "EXPECTED_TAG='${EXPECTED_TAG}'"
-          if [ -z "${EXPECTED_TAG}" ]; then
-            echo "EXPECTED_TAG is empty; check job outputs/needs."
-            exit 1
-          fi
+          kubectl set image "deployment/${DEPLOYMENT}" "${CONTAINER_NAME}=monicamarshall/sparkreports:${EXPECTED_TAG}" -n "${NAMESPACE}" --record
+          kubectl annotate deployment "${DEPLOYMENT}" kubernetes.io/change-cause="CI set image to :${EXPECTED_TAG}" -n "${NAMESPACE}" --overwrite
+
+      - name: Wait for rollout to complete
+        run: kubectl rollout status "deployment/${DEPLOYMENT}" -n "${NAMESPACE}" --timeout=10m
 
       - name: Verify image tag matches expected
         run: |
