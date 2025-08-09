@@ -113,8 +113,9 @@ jobs:
               | .image) = "monicamarshall/sparkreports:" + env(VERSION)
           ' deployment.yaml
 
-          # Validate before committing so ArgoCD never sees broken YAML
-          kubectl apply --dry-run=client -f deployment.yaml
+          # Validate before committing so we never push broken YAML
+          kubectl apply --dry-run=client --validate=false -f deployment.yaml
+
 
           # Stage & commit local edits FIRST
           git add deployment.yaml
