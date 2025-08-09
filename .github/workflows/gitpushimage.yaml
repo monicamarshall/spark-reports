@@ -97,12 +97,19 @@ jobs:
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
+      - name: Install kubeconform (offline validator)
+        run: |
+          curl -L -o kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform.tar.gz kubeconform
+          sudo mv kubeconform /usr/local/bin/
+
       - name: Update deployment.yaml image tag (safe) and validate
         env:
           VERSION: ${{ needs.build_push_docker_image.outputs.version }}
         run: |
           set -euo pipefail
           yq --version
+          kubeconform -version
 
           # Update ONLY the Deployment doc named spark-reports-deployment,
           # and ONLY the container named sparkreports-container
@@ -113,9 +120,8 @@ jobs:
               | .image) = "monicamarshall/sparkreports:" + env(VERSION)
           ' deployment.yaml
 
-          # Validate before committing so we never push broken YAML
-          kubectl apply --dry-run=client --validate=false -f deployment.yaml
-
+          # ✅ Offline schema validation (no cluster/kubeconfig needed)
+          kubeconform -strict -summary -kubernetes-version 1.33.0 deployment.yaml
 
           # Stage & commit local edits FIRST
           git add deployment.yaml
@@ -127,6 +133,7 @@ jobs:
 
           # Push the rebased commit
           git push origin "${GITHUB_REF_NAME}"
+
 
   verify_deploy:
     runs-on: ubuntu-latest
