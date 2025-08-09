@@ -1,9 +1,11 @@
 variable "region" {
-  type        = string
   description = "AWS region"
+  type        = string
+  default     = "us-east-2"
 }
 
 variable "cluster_name" {
-  type        = string
   description = "EKS cluster name"
+  type        = string
+  default     = "spark-cluster"
 }
