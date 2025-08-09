@@ -35,7 +35,7 @@ Terraform will perform the following actions:
                         }
                       + Effect    = "Allow"
                       + Principal = {
-                          + Federated = "arn:aws:iam::828909213317:oidc-provider/https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA"
+                          + Federated = "arn:aws:iam::XXXXXXXXXXXXXX:oidc-provider/https://oidc.eks.us-east-2.amazonaws.com/id/59B033A89C09FC3AA6AAED928D2FC7AA"
                         }
                     },
                 ]
@@ -113,7 +113,7 @@ data.aws_eks_cluster.spark_cluster: Reading...
 data.aws_eks_cluster_auth.spark_cluster: Reading...
 data.aws_caller_identity.current: Reading...
 data.aws_eks_cluster_auth.spark_cluster: Read complete after 0s [id=spark-cluster]
-data.aws_caller_identity.current: Read complete after 0s [id=828909213317]
+data.aws_caller_identity.current: Read complete after 0s [id=XXXXXXXXXXX]
 data.aws_eks_cluster.spark_cluster: Read complete after 1s [id=spark-cluster]
 kubernetes_namespace.spark_reports: Importing from ID "spark-reports"...
 kubernetes_namespace.spark_reports: Import prepared!
@@ -140,7 +140,7 @@ data.aws_eks_cluster_auth.spark_cluster: Reading...
 data.aws_eks_cluster.spark_cluster: Reading...
 data.aws_caller_identity.current: Reading...
 data.aws_eks_cluster_auth.spark_cluster: Read complete after 0s [id=spark-cluster]
-data.aws_caller_identity.current: Read complete after 0s [id=828909213317]
+data.aws_caller_identity.current: Read complete after 0s [id=XXXXXXXXXXXXXX]
 data.aws_eks_cluster.spark_cluster: Read complete after 0s [id=spark-cluster]
 aws_iam_role.spark_reports_irsa_role: Refreshing state... [id=spark-reports-irsa-role]
 kubernetes_namespace.spark_reports: Refreshing state... [id=spark-reports]
@@ -159,7 +159,7 @@ Terraform will perform the following actions:
 
       + metadata {
           + annotations      = {
-              + "eks.amazonaws.com/role-arn" = "arn:aws:iam::828909213317:role/spark-reports-irsa-role"
+              + "eks.amazonaws.com/role-arn" = "arn:aws:iam::XXXXXXXXXXXXXXXXX:role/spark-reports-irsa-role"
             }
           + generation       = (known after apply)
           + name             = "spark-reports-sa"
@@ -196,11 +196,11 @@ PS C:\data\EclipseAWSLambda\reports-demo\eks-service-account> aws eks describe-c
 {
     "cluster": {
         "name": "spark-cluster",
-        "arn": "arn:aws:eks:us-east-2:828909213317:cluster/spark-cluster",
+        "arn": "arn:aws:eks:us-east-2:XXXXXXXXXXXXXXXX:cluster/spark-cluster",
         "createdAt": "2025-08-07T15:32:12.587000-06:00",
         "version": "1.33",
         "endpoint": "https://59B033A89C09FC3AA6AAED928D2FC7AA.gr7.us-east-2.eks.amazonaws.com",
-        "roleArn": "arn:aws:iam::828909213317:role/EKSClusterRole",
+        "roleArn": "arn:aws:iam::XXXXXXXXXXXXXXXX:role/EKSClusterRole",
         "resourcesVpcConfig": {
             "subnetIds": [
                 "subnet-084772b6ba773dc79",

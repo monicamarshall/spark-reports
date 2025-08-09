@@ -1,11 +1,12 @@
-This error means your kubectl is still pointing to your old AKS (Azure Kubernetes Service) cluster rather than your new EKS (AWS Elastic Kubernetes Service) cluster.
+
+FIX ERROR:  kubectl is still pointing to old AKS (Azure Kubernetes Service) cluster rather than TO new EKS (AWS Elastic Kubernetes Service) cluster.
 
 The error:
 
 couldn't get current server API group list:
 Get "https://myaksdns-t2zqpykw.hcp.eastus2.azmk8s.io:443/api?timeout=32s":
 dial tcp: lookup myaksdns-t2zqpykw.hcp.eastus2.azmk8s.io: no such host
-...is because the kubeconfig file (~/.kube/config) still contains or defaults to your old AKS context, which no longer exists or is unreachable.
+...is because the kubeconfig file (~/.kube/config) still contains or defaults to old AKS context, which no longer exists or is unreachable.
 
 How to Fix It (Use Your EKS Cluster)
 Run the following command to update your kubeconfig to point to your new EKS cluster:
@@ -27,7 +28,7 @@ It should say something like:
 arn:aws:eks:us-east-2:<your-account-id>:cluster/spark-cluster
 
 kubectl cluster-info
-🔁 Optional: Clear or Rename the Old AKS Context
+Optional: Clear or Rename the Old AKS Context
 If you want to avoid confusion later, you can clean up the AKS context:
 
 kubectl config delete-context <name-of-aks-context>
@@ -37,6 +38,7 @@ You can list all contexts with:
 
 kubectl config get-contexts
 
+ACCESS ARGOCD INITIAL PWD
 
 Access the ArgoCD UI:
 
@@ -65,14 +67,15 @@ PS C:\data\EclipseAWSLambda\reports-demo\terraform-argocd> $encoded = kubectl ge
 
 PS C:\data\EclipseAWSLambda\reports-demo\terraform-argocd> [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded))
 
-LOVNmC-buV9AtjbW
+xxxxxxxxxxx
 
 In bash
 
 kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
 
 PS C:\data\EclipseAWSLambda\reports-demo\terraform-argocd> [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded))
-LOVNmC-buV9AtjbW
+
+XXXXXXXXXXXXXX
 
 
 PS C:\data\EclipseAWSLambda\reports-demo\terraform-argocd> nslookup af31a9670cc654140b88880db97c3afc-694698367.us-east-2.elb.amazonaws.com
@@ -80,14 +83,13 @@ Server:  UnKnown
 Address:  172.17.3.1
 
 
-What You Got Is Correct
-You received this external hostname from your ArgoCD LoadBalancer:
+external hostname from your ArgoCD LoadBalancer:
 
 af31a9670cc654140b88880db97c3afc-694698367.us-east-2.elb.amazonaws.com
 
 
 
-# Deploying ArgoCD on Azure Kubernetes Service (AKS) using Terraform By Raghu The Security Expert
+# Deploying ArgoCD on Azure Kubernetes Service (AKS) using Terraform
 
 ## Introduction
 This guide provides step-by-step instructions to deploy ArgoCD on AKS using Terraform, facilitating a GitOps workflow on Azure.

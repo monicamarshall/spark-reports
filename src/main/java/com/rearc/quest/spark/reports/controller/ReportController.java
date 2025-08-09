@@ -17,7 +17,7 @@ public class ReportController {
     @GetMapping("/generate")
     public String generateReports() {
         sparkReportService.generateReports();
-        return "Reports generated in S3 reports folder!";
+        return "Spark reports successfully generated and uploaded in S3 reports folder!";
     }
 }
 

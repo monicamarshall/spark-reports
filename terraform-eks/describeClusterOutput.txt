@@ -2,11 +2,11 @@ PS C:\data\EclipseAWSLambda\reports-demo> aws eks describe-cluster --name spark-
 {
     "cluster": {
         "name": "spark-cluster",
-        "arn": "arn:aws:eks:us-east-2:828909213317:cluster/spark-cluster",
+        "arn": "arn:aws:eks:us-east-2:xxxxxxxxxxxx:cluster/spark-cluster",
         "createdAt": "2025-08-07T15:32:12.587000-06:00",
         "version": "1.33",
         "endpoint": "https://59B033A89C09FC3AA6AAED928D2FC7AA.gr7.us-east-2.eks.amazonaws.com",
-        "roleArn": "arn:aws:iam::828909213317:role/EKSClusterRole",
+        "roleArn": "arn:aws:iam::xxxxxxxxxxxx:role/EKSClusterRole",
         "resourcesVpcConfig": {
             "subnetIds": [
                 "subnet-084772b6ba773dc79",
