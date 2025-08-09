@@ -16,21 +16,6 @@ spec:
       serviceAccountName: spark-reports-sa
       containers:
         - name: sparkreports-container
-          image: monicamarshall/sparkreports:2
+          image: monicamarshall/sparkreports:8
           ports:
             - containerPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sparkreports-service
-  namespace: spark-reports
-spec:
-  selector:
-    app: sparkreports
-  ports:
-    - name: http
-      protocol: TCP
-      port: 8600
-      targetPort: 8080
-  type: LoadBalancer
