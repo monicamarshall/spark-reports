@@ -109,7 +109,9 @@ jobs:
         run: |
           set -euo pipefail
           yq --version
-          kubeconform -version
+          kubeconform -v
+          # validate offline; ignore unknown CRDs if any, but fail on real schema errors
+          kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version 1.33.0 deployment.yaml
 
           # Update ONLY the Deployment doc named spark-reports-deployment,
           # and ONLY the container named sparkreports-container
