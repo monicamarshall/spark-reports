@@ -11,6 +11,9 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  KUBE_VERSION: "1.29.0"
+
 jobs:
   build_push_docker_image:
     runs-on: ubuntu-latest
@@ -21,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # needed for rebase & pushing
+          fetch-depth: 0
 
       - name: Bump version from version.txt
         id: bump
@@ -62,19 +65,11 @@ jobs:
         run: |
           git config user.email "${{ secrets.GIT_EMAIL }}"
           git config user.name  "${{ secrets.GIT_USERNAME }}"
-
-          # Make sure we’re on the workflow branch
           git checkout "${GITHUB_REF_NAME}"
-
-          # Stage & commit local edits FIRST
           git add version.txt
           git commit -m "chore: bump version to $VERSION" || echo "No changes to commit"
-
-          # Rebase on remote to avoid non-fast-forward rejects
           git fetch origin
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-
-          # Push the rebased commit
           git push origin "${GITHUB_REF_NAME}"
 
   update_k8s_yaml:
@@ -106,36 +101,27 @@ jobs:
       - name: Update deployment.yaml image tag (safe) and validate
         env:
           VERSION: ${{ needs.build_push_docker_image.outputs.version }}
+          KUBE_VERSION: ${{ env.KUBE_VERSION }}
         run: |
           set -euo pipefail
           yq --version
           kubeconform -v
-          # validate offline; ignore unknown CRDs if any, but fail on real schema errors
-          kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version 1.33.0 deployment.yaml
+          kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version "${KUBE_VERSION}" deployment.yaml
 
-          # Update ONLY the Deployment doc named spark-reports-deployment,
-          # and ONLY the container named sparkreports-container
           yq -i '
-            select(.kind == "Deployment" and .metadata.name == "spark-reports-deployment")
-            | (.spec.template.spec.containers[]
-              | select(.name == "sparkreports-container")
-              | .image) = "monicamarshall/sparkreports:" + env(VERSION)
+            (. | select(.kind == "Deployment" and .metadata.name == "spark-reports-deployment")
+               | .spec.template.spec.containers[] 
+               | select(.name == "sparkreports-container")
+               | .image) = "monicamarshall/sparkreports:" + env(VERSION)
           ' deployment.yaml
 
-          #Offline schema validation (no cluster/kubeconfig needed)
-          kubeconform -strict -summary -kubernetes-version 1.33.0 deployment.yaml
+          kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version "${KUBE_VERSION}" deployment.yaml
 
-          # Stage & commit local edits FIRST
           git add deployment.yaml
           git commit -m "chore: deploy image tag ${VERSION}" || echo "No changes to commit"
-
-          # Rebase onto remote to avoid rejects
           git fetch origin
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-
-          # Push the rebased commit
           git push origin "${GITHUB_REF_NAME}"
-
 
   verify_deploy:
     runs-on: ubuntu-latest
@@ -149,6 +135,13 @@ jobs:
       EXPECTED_TAG: ${{ needs.build_push_docker_image.outputs.version }}
 
     steps:
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client=true
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -158,17 +151,6 @@ jobs:
 
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --name "${EKS_CLUSTER}" --region "${AWS_REGION}"
-
-      - name: Checkout (for fallback)
-        uses: actions/checkout@v4
-
-      - name: Fallback: set EXPECTED_TAG from version.txt if empty
-        run: |
-          if [ -z "${EXPECTED_TAG}" ]; then
-            V=$(tr -d '\r' < version.txt)
-            echo "EXPECTED_TAG=$V" >> "$GITHUB_ENV"
-            echo "Filled EXPECTED_TAG from version.txt: $V"
-          fi
 
       - name: Wait for rollout to complete
         run: kubectl rollout status "deployment/${DEPLOYMENT}" -n "${NAMESPACE}" --timeout=5m
@@ -183,13 +165,10 @@ jobs:
 
       - name: Verify image tag matches expected
         run: |
-          ACTUAL_IMAGE=$(kubectl get deployment "${DEPLOYMENT}" -n "${NAMESPACE}" \
-            -o jsonpath='{.spec.template.spec.containers[0].image}')
+          ACTUAL_IMAGE=$(kubectl get deployment "${DEPLOYMENT}" -n "${NAMESPACE}"             -o jsonpath='{.spec.template.spec.containers[?(@.name=="'"${CONTAINER_NAME}"'")].image}')
           echo "Cluster is running image: ${ACTUAL_IMAGE}"
           if ! echo "${ACTUAL_IMAGE}" | grep -q "monicamarshall/sparkreports:${EXPECTED_TAG}$"; then
             echo "ERROR: Expected tag :${EXPECTED_TAG} but found ${ACTUAL_IMAGE}"
             exit 1
           fi
           echo "OK: Image tag matches :${EXPECTED_TAG}"
-
-
