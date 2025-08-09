@@ -122,7 +122,7 @@ jobs:
               | .image) = "monicamarshall/sparkreports:" + env(VERSION)
           ' deployment.yaml
 
-          # ✅ Offline schema validation (no cluster/kubeconfig needed)
+          #Offline schema validation (no cluster/kubeconfig needed)
           kubeconform -strict -summary -kubernetes-version 1.33.0 deployment.yaml
 
           # Stage & commit local edits FIRST
@@ -152,8 +152,12 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          # role-to-assume: arn:aws:iam::828909213317:role/<your-ci-role>  # if using OIDC
+
+      - name: Who am I?  # optional debug
+        run: aws sts get-caller-identity
 
       - name: Update kubeconfig for EKS
         run: aws eks update-kubeconfig --name "${EKS_CLUSTER}" --region "${AWS_REGION}"
@@ -171,3 +175,4 @@ jobs:
             exit 1
           fi
           echo "OK: Image tag matches :${EXPECTED_TAG}"
+
