@@ -32,17 +32,22 @@ public class SparkReportService {
 
 	public void generateReports() {
 
-		SparkSession spark = SparkSession.builder()
-				.appName("BLS Data Analytics Reports")
-				.master("local[*]")
-				// Disable Spark Web UI to avoid javax.servlet conflict
-				.config("spark.ui.enabled", "false")
-				.config("spark.metrics.conf", "metrics.properties")
-				.config("spark.hadoop.fs.s3a.access.key", System.getenv("AWS_ACCESS_KEY_ID"))
-				.config("spark.hadoop.fs.s3a.secret.key", System.getenv("AWS_SECRET_ACCESS_KEY"))
-				.config("spark.hadoop.fs.s3a.endpoint", "s3.us-east-2.amazonaws.com")
-				.config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-				.getOrCreate();
+	SparkSession spark = SparkSession.builder()
+    .appName("BLS Data Analytics Reports")
+    .master("local[*]")
+    .config("spark.ui.enabled", "false")
+    .config("spark.metrics.conf", "metrics.properties")
+
+    // IRSA: use the pod's web identity credentials
+    .config("spark.hadoop.fs.s3a.aws.credentials.provider",
+            "com.amazonaws.auth.WebIdentityTokenCredentialsProvider")
+    .config("spark.hadoop.fs.s3a.region", "us-east-2")
+    // optional but fine:
+    .config("spark.hadoop.fs.s3a.endpoint", "s3.us-east-2.amazonaws.com")
+
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+    .getOrCreate();
+	
 		try {
 			generatePopulationStats(spark);
 			generateBestYearReport(spark);
@@ -50,6 +55,10 @@ public class SparkReportService {
 			spark.stop();
 		}
 	}
+
+
+
+
 
 	private void generatePopulationStats(SparkSession spark) {
 
